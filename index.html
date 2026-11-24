@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script Industries</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar"><span>⚡ Alle Downloads kostenlos</span><div><a href="#shop">Downloads</a><a href="admin.html">Admin</a></div></div>
+<header>
+  <a class="logo" href="index.html">Script<span>Industries</span></a>
+  <div class="search"><input id="q" placeholder="Suchen..."><button>⌕</button></div>
+  <nav><a href="#shop">Alle Dateien</a></nav>
+</header>
+<div class="cats" id="cats"></div>
+
+<section class="hero">
+  <div>
+    <span class="badge">Neu & kostenlos</span>
+    <h1>Scripts, Tools & Assets zum Download</h1>
+    <p>Hochwertige Dateien von Script Industries – direkt herunterladen.</p>
+    <a class="btn" href="#shop">Jetzt stöbern</a>
+  </div>
+  <div class="code-card">
+    <span class="k">local</span> industries = <span class="s">"Script"</span><br>
+    <span class="k">function</span> download(file)<br>
+    &nbsp;&nbsp;<span class="k">return</span> file:get()<br>
+    <span class="k">end</span>
+  </div>
+</section>
+
+<main id="shop">
+  <div class="toolbar">
+    <h2>Alle Downloads</h2>
+    <select id="sort"><option value="new">Neueste zuerst</option><option value="name">Name A–Z</option></select>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+<footer>© <span id="y"></span> Script Industries</footer>
+
+<script>
+let items=[],cat="Alle";
+document.getElementById("y").textContent=new Date().getFullYear();
+const fmt=b=>b>1e6?(b/1e6).toFixed(1)+" MB":(b/1e3).toFixed(0)+" KB";
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+fetch("files.json?"+Date.now()).then(r=>r.json()).then(d=>{items=d;renderCats();render()});
+function renderCats(){
+  const cs=["Alle",...new Set(items.map(i=>i.category).filter(Boolean))];
+  cats.innerHTML=cs.map(c=>`<button class="${c===cat?"active":""}">${esc(c)}</button>`).join("");
+  [...cats.children].forEach((b,i)=>b.onclick=()=>{cat=cs[i];renderCats();render()});
+}
+function render(){
+  const q=document.getElementById("q").value.toLowerCase();
+  let l=items.filter(i=>(cat==="Alle"||i.category===cat)&&(i.title+i.description).toLowerCase().includes(q));
+  l.sort(sort.value==="name"?(a,b)=>a.title.localeCompare(b.title):(a,b)=>b.date.localeCompare(a.date));
+  grid.innerHTML=l.length?l.map(i=>`
+    <div class="item">
+      <div class="thumb">${i.image?`<img src="${esc(i.image)}" alt="">`:esc(i.file.split(".").pop().toUpperCase())}</div>
+      <div class="info">
+        <small>${esc(i.category)} · ${fmt(i.size)}</small>
+        <h3>${esc(i.title)}</h3>
+        <p>${esc(i.description)}</p>
+        <a class="btn" href="${esc(i.file)}" download>⬇ Download</a>
+      </div>
+    </div>`).join(""):`<div class="empty">Noch keine Dateien.</div>`;
+}
+q.oninput=render;sort.onchange=render;
+</script>
+</body>
+</html>
