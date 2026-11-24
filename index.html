@@ -1,86 +1,99 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Script Industries</title>
+<title>Script Industries — Free Scripts, Tools & Assets</title>
+<meta name="description" content="Download scripts, tools and assets from Script Industries.">
 <link rel="stylesheet" href="style.css">
 <script src="config.js"></script>
 </head>
 <body>
-<div class="topbar"><span>⚡ Alle Downloads kostenlos</span><div><a href="#shop">Downloads</a></div></div>
+<div class="topbar"><span>⚡ <b>All downloads are free</b> — no account needed</span><span>New drops every week</span></div>
 <header>
-  <a class="logo" href="index.html">Script<span>Industries</span></a>
-  <div class="search"><input id="q" placeholder="Suchen..."><button>⌕</button></div>
-  <nav><a href="#shop">Alle Dateien</a></nav>
+  <a class="logo" href="./"><i>SI</i>Script<span>Industries</span></a>
+  <label class="search"><input id="q" placeholder="Search scripts, tools, assets..."><span>⌕</span></label>
+  <nav><a href="#shop">Browse</a><a href="#about">About</a></nav>
 </header>
 <div class="cats" id="cats"></div>
 
 <section class="hero">
   <div>
-    <span class="badge">Neu & kostenlos</span>
-    <h1>Scripts, Tools & Assets zum Download</h1>
-    <p>Hochwertige Dateien von Script Industries – direkt herunterladen.</p>
-    <a class="btn" href="#shop">Jetzt stöbern</a>
+    <span class="badge">Fresh uploads available</span>
+    <h1>Premium scripts,<br><em>free</em> to download.</h1>
+    <p>Hand-crafted tools, GUIs and assets for Roblox, Minecraft, Discord and more — ready to drop into your next project.</p>
+    <a class="btn" href="#shop">Browse downloads →</a>
+    <div class="stats"><div><b id="sFiles">0</b><small>Files</small></div><div><b id="sCats">0</b><small>Categories</small></div><div><b>100%</b><small>Free</small></div></div>
   </div>
-  <div class="code-card">
-    <span class="k">local</span> industries = <span class="s">"Script"</span><br>
-    <span class="k">function</span> download(file)<br>
-    &nbsp;&nbsp;<span class="k">return</span> file:get()<br>
-    <span class="k">end</span>
-  </div>
+  <div class="window"><div class="bar"><i></i><i></i><i></i></div><pre><span class="c">-- script industries</span>
+<span class="k">local</span> SI = <span class="f">require</span>(<span class="s">"ScriptIndustries"</span>)
+
+<span class="k">local</span> pack = SI.<span class="f">download</span>(<span class="s">"latest"</span>)
+pack:<span class="f">install</span>()
+
+<span class="f">print</span>(<span class="s">"Ready to build ✓"</span>)</pre></div>
 </section>
 
-
-<div id="adminBox" style="display:none">
+<div id="adminBox" style="display:none;padding:0 6%">
   <div class="panel">
-    <h2>⬆ Datei hochladen <small style="font-size:13px;color:var(--muted)">(nur du siehst das)</small></h2>
-    <label>Datei</label><input type="file" id="file">
-    <label>Titel</label><input id="title">
-    <label>Kategorie</label><input id="category" placeholder="z.B. Roblox, Minecraft, Discord">
-    <label>Beschreibung</label><textarea id="desc" rows="3"></textarea>
-    <label>Vorschaubild (optional)</label><input type="file" id="img" accept="image/*">
-    <button class="btn" id="up" onclick="upload()">Hochladen</button>
+    <h2>Upload a file <small>Only visible to you</small></h2>
+    <label>File</label><input type="file" id="file">
+    <div class="row">
+      <div><label>Title</label><input id="title" placeholder="e.g. Admin Panel GUI"></div>
+      <div><label>Category</label><input id="category" placeholder="Roblox, Minecraft, Discord..."></div>
+    </div>
+    <label>Description</label><textarea id="desc" rows="3" placeholder="What is it, how to use it..."></textarea>
+    <label>Preview image (optional)</label><input type="file" id="img" accept="image/*">
+    <div class="actions"><button class="btn" id="up" onclick="upload()">Upload</button><button class="btn ghost" onclick="logout()">Log out</button></div>
     <div class="msg" id="msg"></div>
-    <button class="btn ghost" onclick="logout()">Ausloggen</button>
   </div>
 </div>
+
 <main id="shop">
-  <div class="toolbar">
-    <h2>Alle Downloads</h2>
-    <select id="sort"><option value="new">Neueste zuerst</option><option value="name">Name A–Z</option></select>
+  <div class="head">
+    <div><h2>All Downloads</h2><p id="count"></p></div>
+    <select id="sort"><option value="new">Newest first</option><option value="name">Name A–Z</option><option value="size">Smallest first</option></select>
   </div>
   <div class="grid" id="grid"></div>
 </main>
-<footer>© <span id="y"></span> Script Industries</footer>
+
+<footer id="about">
+  <a class="logo" href="./"><i>SI</i>Script<span>Industries</span></a>
+  <span>Scripts, tools & assets — built with care.</span>
+  <span>© <span id="y"></span> Script Industries</span>
+</footer>
 
 <script>
-let items=[],cat="Alle";
-document.getElementById("y").textContent=new Date().getFullYear();
-const fmt=b=>b>1e6?(b/1e6).toFixed(1)+" MB":(b/1e3).toFixed(0)+" KB";
-const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let items=[],cat="All";
+y.textContent=new Date().getFullYear();
+const fmt=b=>b>1e6?(b/1e6).toFixed(1)+" MB":Math.max(1,b/1e3).toFixed(0)+" KB";
+const ago=d=>{const s=(Date.now()-new Date(d))/1e3;return s<3600?"just now":s<86400?Math.floor(s/3600)+"h ago":s<2592000?Math.floor(s/86400)+"d ago":new Date(d).toLocaleDateString("en-GB")};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 fetch("files.json?"+Date.now()).then(r=>r.json()).then(d=>{items=d;renderCats();render()});
 function renderCats(){
-  const cs=["Alle",...new Set(items.map(i=>i.category).filter(Boolean))];
+  const cs=["All",...new Set(items.map(i=>i.category).filter(Boolean))];
   cats.innerHTML=cs.map(c=>`<button class="${c===cat?"active":""}">${esc(c)}</button>`).join("");
-  [...cats.children].forEach((b,i)=>b.onclick=()=>{cat=cs[i];renderCats();render()});
+  [...cats.children].forEach((b,i)=>b.onclick=()=>{cat=cs[i];renderCats();render();shop.scrollIntoView()});
+  sFiles.textContent=items.length;sCats.textContent=cs.length-1;
 }
 function render(){
-  const q=document.getElementById("q").value.toLowerCase();
-  let l=items.filter(i=>(cat==="Alle"||i.category===cat)&&(i.title+i.description).toLowerCase().includes(q));
-  l.sort(sort.value==="name"?(a,b)=>a.title.localeCompare(b.title):(a,b)=>b.date.localeCompare(a.date));
-  grid.innerHTML=l.length?l.map(i=>`
-    <div class="item">
-      <div class="thumb">${i.image?`<img src="${esc(i.image)}" alt="">`:esc(i.file.split(".").pop().toUpperCase())}</div>
+  const t=q.value.toLowerCase();
+  let l=items.filter(i=>(cat==="All"||i.category===cat)&&(i.title+i.description+i.category).toLowerCase().includes(t));
+  const S={name:(a,b)=>a.title.localeCompare(b.title),size:(a,b)=>a.size-b.size,new:(a,b)=>b.date.localeCompare(a.date)};
+  l.sort(S[sort.value]);
+  count.textContent=`${l.length} file${l.length===1?"":"s"}${cat!=="All"?" in "+cat:""}`;
+  grid.innerHTML=l.length?l.map((i,n)=>`
+    <div class="item" style="animation-delay:${n*.05}s">
+      <div class="thumb">${i.image?`<img src="${esc(i.image)}" alt="" loading="lazy">`:`<span class="ext">.${esc(i.file.split(".").pop().toLowerCase())}</span>`}<span class="tag">${esc(i.category)}</span></div>
       <div class="info">
-        <small>${esc(i.category)} · ${fmt(i.size)}</small>
         <h3>${esc(i.title)}</h3>
-        <p>${esc(i.description)}</p>
-        <a class="btn" href="${esc(i.file)}" download>⬇ Download</a>${ADMIN?`<button class="btn ghost" onclick="del(${i.id})">🗑 Löschen</button>`:""}
+        <p>${esc(i.description)||"No description."}</p>
+        <div class="meta"><span>${fmt(i.size)}</span><span>${ago(i.date)}</span></div>
+        <a class="btn" href="${esc(i.file)}" download>Download ↓</a>
+        ${ADMIN?`<button class="btn danger" onclick="del(${i.id})">Delete</button>`:""}
       </div>
-    </div>`).join(""):`<div class="empty">Noch keine Dateien.</div>`;
+    </div>`).join(""):`<div class="empty"><b>∅</b>${items.length?"Nothing matches your search.":"No files yet — check back soon."}</div>`;
 }
 q.oninput=render;sort.onchange=render;
-
 const API=`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/`;
 let TOKEN=localStorage.getItem("si_token"),ADMIN=false;
 const H=()=>({Authorization:"Bearer "+TOKEN,Accept:"application/vnd.github+json"});
@@ -91,7 +104,7 @@ async function checkAdmin(){
   const r=await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}`,{headers:H()});
   const j=await r.json();
   if(r.ok&&j.permissions?.push){localStorage.setItem("si_token",TOKEN);ADMIN=true;$("adminBox").style.display="block";history.replaceState(null,"",location.pathname);render()}
-  else{localStorage.removeItem("si_token");TOKEN=null;if(location.hash==="#login")alert("Token ungültig.")}
+  else{localStorage.removeItem("si_token");TOKEN=null;if(location.hash==="#login")alert("Invalid token.")}
 }
 function logout(){localStorage.removeItem("si_token");location.reload()}
 const b64=f=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.readAsDataURL(f)});
@@ -105,26 +118,26 @@ async function put(path,content,msg,sha){
   if(!r.ok)throw new Error((await r.json()).message);return r.json();
 }
 async function upload(){
-  const f=$("file").files[0];if(!f)return $("msg").textContent="Bitte Datei wählen.";
-  if(f.size>50e6)return $("msg").textContent="❌ Max. 50 MB pro Datei.";
-  $("up").disabled=true;$("msg").textContent="⏳ Lade hoch...";
+  const f=$("file").files[0];if(!f)return $("msg").textContent="Please choose a file.";
+  if(f.size>50e6)return $("msg").textContent="❌ Max. 50 MB per file.";
+  $("up").disabled=true;$("msg").textContent="⏳ Uploading...";
   try{
     const id=Date.now(),safe=f.name.replace(/[^\w.\-]/g,"_"),path=`files/${id}_${safe}`;
     await put(path,await b64(f),"Upload "+safe);
     let image="";const im=$("img").files[0];
     if(im){image=`files/${id}_thumb_${im.name.replace(/[^\w.\-]/g,"_")}`;await put(image,await b64(im),"Thumbnail")}
     const m=await getManifest();
-    const entry={id,title:$("title").value||f.name,category:$("category").value||"Sonstiges",description:$("desc").value,file:path,image,size:f.size,date:new Date().toISOString()};
+    const entry={id,title:$("title").value||f.name,category:$("category").value||"Other",description:$("desc").value,file:path,image,size:f.size,date:new Date().toISOString()};
     m.data.push(entry);
     await put("files.json",utf8b64(JSON.stringify(m.data,null,2)),"Add "+safe,m.sha);
     items=m.data;renderCats();render();
-    $("msg").textContent="✅ Hochgeladen! Download klappt in ~1 Minute.";
+    $("msg").textContent="✅ Uploaded! Download goes live in ~1 minute.";
     ["file","title","category","desc","img"].forEach(k=>$(k).value="");
   }catch(e){$("msg").textContent="❌ "+e.message}
   $("up").disabled=false;
 }
 async function del(id){
-  if(!confirm("Wirklich löschen?"))return;
+  if(!confirm("Delete this file?"))return;
   const m=await getManifest(),it=m.data.find(i=>i.id===id);
   for(const p of [it.file,it.image].filter(Boolean)){
     const r=await fetch(API+p+"?ref="+CONFIG.branch,{headers:H()});
@@ -135,7 +148,6 @@ async function del(id){
   items=m2.data;renderCats();render();
 }
 checkAdmin();
-
 </script>
 </body>
 </html>
