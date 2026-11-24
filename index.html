@@ -4,9 +4,10 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Script Industries</title>
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
 </head>
 <body>
-<div class="topbar"><span>⚡ Alle Downloads kostenlos</span><div><a href="#shop">Downloads</a><a href="admin.html">Admin</a></div></div>
+<div class="topbar"><span>⚡ Alle Downloads kostenlos</span><div><a href="#shop">Downloads</a></div></div>
 <header>
   <a class="logo" href="index.html">Script<span>Industries</span></a>
   <div class="search"><input id="q" placeholder="Suchen..."><button>⌕</button></div>
@@ -29,6 +30,20 @@
   </div>
 </section>
 
+
+<div id="adminBox" style="display:none">
+  <div class="panel">
+    <h2>⬆ Datei hochladen <small style="font-size:13px;color:var(--muted)">(nur du siehst das)</small></h2>
+    <label>Datei</label><input type="file" id="file">
+    <label>Titel</label><input id="title">
+    <label>Kategorie</label><input id="category" placeholder="z.B. Roblox, Minecraft, Discord">
+    <label>Beschreibung</label><textarea id="desc" rows="3"></textarea>
+    <label>Vorschaubild (optional)</label><input type="file" id="img" accept="image/*">
+    <button class="btn" id="up" onclick="upload()">Hochladen</button>
+    <div class="msg" id="msg"></div>
+    <button class="btn ghost" onclick="logout()">Ausloggen</button>
+  </div>
+</div>
 <main id="shop">
   <div class="toolbar">
     <h2>Alle Downloads</h2>
@@ -60,11 +75,67 @@ function render(){
         <small>${esc(i.category)} · ${fmt(i.size)}</small>
         <h3>${esc(i.title)}</h3>
         <p>${esc(i.description)}</p>
-        <a class="btn" href="${esc(i.file)}" download>⬇ Download</a>
+        <a class="btn" href="${esc(i.file)}" download>⬇ Download</a>${ADMIN?`<button class="btn ghost" onclick="del(${i.id})">🗑 Löschen</button>`:""}
       </div>
     </div>`).join(""):`<div class="empty">Noch keine Dateien.</div>`;
 }
 q.oninput=render;sort.onchange=render;
+
+const API=`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/`;
+let TOKEN=localStorage.getItem("si_token"),ADMIN=false;
+const H=()=>({Authorization:"Bearer "+TOKEN,Accept:"application/vnd.github+json"});
+const $=id=>document.getElementById(id);
+async function checkAdmin(){
+  if(!TOKEN&&location.hash==="#login"){TOKEN=prompt("GitHub Token:");}
+  if(!TOKEN)return;
+  const r=await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}`,{headers:H()});
+  const j=await r.json();
+  if(r.ok&&j.permissions?.push){localStorage.setItem("si_token",TOKEN);ADMIN=true;$("adminBox").style.display="block";history.replaceState(null,"",location.pathname);render()}
+  else{localStorage.removeItem("si_token");TOKEN=null;if(location.hash==="#login")alert("Token ungültig.")}
+}
+function logout(){localStorage.removeItem("si_token");location.reload()}
+const b64=f=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.readAsDataURL(f)});
+const utf8b64=s=>btoa(unescape(encodeURIComponent(s)));
+async function getManifest(){
+  const r=await fetch(API+"files.json?ref="+CONFIG.branch,{headers:H()});const j=await r.json();
+  return {sha:j.sha,data:JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,"")))))};
+}
+async function put(path,content,msg,sha){
+  const r=await fetch(API+path,{method:"PUT",headers:H(),body:JSON.stringify({message:msg,content,branch:CONFIG.branch,...(sha&&{sha})})});
+  if(!r.ok)throw new Error((await r.json()).message);return r.json();
+}
+async function upload(){
+  const f=$("file").files[0];if(!f)return $("msg").textContent="Bitte Datei wählen.";
+  if(f.size>50e6)return $("msg").textContent="❌ Max. 50 MB pro Datei.";
+  $("up").disabled=true;$("msg").textContent="⏳ Lade hoch...";
+  try{
+    const id=Date.now(),safe=f.name.replace(/[^\w.\-]/g,"_"),path=`files/${id}_${safe}`;
+    await put(path,await b64(f),"Upload "+safe);
+    let image="";const im=$("img").files[0];
+    if(im){image=`files/${id}_thumb_${im.name.replace(/[^\w.\-]/g,"_")}`;await put(image,await b64(im),"Thumbnail")}
+    const m=await getManifest();
+    const entry={id,title:$("title").value||f.name,category:$("category").value||"Sonstiges",description:$("desc").value,file:path,image,size:f.size,date:new Date().toISOString()};
+    m.data.push(entry);
+    await put("files.json",utf8b64(JSON.stringify(m.data,null,2)),"Add "+safe,m.sha);
+    items=m.data;renderCats();render();
+    $("msg").textContent="✅ Hochgeladen! Download klappt in ~1 Minute.";
+    ["file","title","category","desc","img"].forEach(k=>$(k).value="");
+  }catch(e){$("msg").textContent="❌ "+e.message}
+  $("up").disabled=false;
+}
+async function del(id){
+  if(!confirm("Wirklich löschen?"))return;
+  const m=await getManifest(),it=m.data.find(i=>i.id===id);
+  for(const p of [it.file,it.image].filter(Boolean)){
+    const r=await fetch(API+p+"?ref="+CONFIG.branch,{headers:H()});
+    if(r.ok){const {sha}=await r.json();await fetch(API+p,{method:"DELETE",headers:H(),body:JSON.stringify({message:"Delete "+p,sha,branch:CONFIG.branch})})}
+  }
+  const m2=await getManifest();m2.data=m2.data.filter(i=>i.id!==id);
+  await put("files.json",utf8b64(JSON.stringify(m2.data,null,2)),"Remove",m2.sha);
+  items=m2.data;renderCats();render();
+}
+checkAdmin();
+
 </script>
 </body>
 </html>
